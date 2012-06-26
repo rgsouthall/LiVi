@@ -295,8 +295,7 @@ def register():
             items=[("0", "Cumulative light exposure", "Cumulative luxhours"),
                    ("1", "Cumulative radiation calculation", "kWh/m**2"),
                    ("4", "Daylight availability", "Daylight availability"),
-			  ("5", "Daylight coefficients", "Annual Daylight coefficients"),
-            ],
+			  ],
             name="",
             description="specify the lighting metric required",
             default="0")	

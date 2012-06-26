@@ -33,7 +33,7 @@ class LiVi_c(object):
                 self.simlist = (" |  rcalc  -e '$1=47.4*$1+120*$2+11.6*$3' ", " |  rcalc  -e '$1=$1' ", " |  rcalc  -e '$1=(47.4*$1+120*$2+11.6*$3)/100' ")
                 self.unit = ("Lux", "W/m^2", "DF %", "Glare")
             else:
-                self.simlistn = ("cumillumout", "cumirradout", "daout")
+                self.simlistn = ("cumillumout", "cumirradout", "", "", "daout")
                 self.simlist = (" |  rcalc  -e '$1=47.4*$1+120*$2+11.6*$3' ", " |  rcalc  -e '$1=$1' ")
                 self.unit = ("Luxhours", "Wh/m^2", "", "", "DA %")
         if str(sys.platform) == 'win32':
@@ -43,7 +43,7 @@ class LiVi_c(object):
                 self.simlist = (' |  rcalc  -e "\$1=47.4*\$1+120*\$2+11.6*\$3" ', " |  rcalc  -e '\$1=\$1' ", " |  rcalc  -e '\$1=(47.4*\$1+120*\$2+11.6*\$3)/100' ")
                 self.unit = ("Lux", "W/m^2", "DF %", "Glare")
             else:
-                self.simlistn = ("cumillumout", "cumirradout", "daout")
+                self.simlistn = ("cumillumout", "cumirradout", "", "", "daout")
                 self.simlist = (' |  rcalc  -e "\$1=47.4*\$1+120*\$2+11.6*\$3" ', " |  rcalc  -e '\$1=\$1' ")
                 self.unit = ("Luxhours", "Wh/m^2", "", "", "DA %")
         try:
@@ -138,6 +138,8 @@ class LiVi_c(object):
             vecvals.append([float(x) for x in line.strip("\n").strip("  ").split(" ")])
         vecfile.close()
         for frame in range(0, bpy.context.scene.frame_end+1):
+            print('help', lexport.newdir, self.simlistn, lexport.metric)
+            print(lexport.newdir+"/"+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res")
             hours = 0
             subprocess.call("oconv -w "+lexport.lights(frame)+" "+lexport.filename+".whitesky "+lexport.mat(frame)+" "+lexport.poly(frame)+" > "+lexport.filename+"-"+str(frame)+".oct", shell = True)
             if not os.path.isdir(lexport.newdir+"/s_data"):
@@ -163,12 +165,17 @@ class LiVi_c(object):
                     if reading > lexport.scene.livi_calc_min_lux:
                     
                         res[frame][k] = res[frame][k] + 1
-        
+                        
             for r in range(0, len(res[frame])):
                 if hours != 0:
                     res[frame][r] = res[frame][r]*100/hours
-        self.resapply(res, lexport)         
-        calc_op.report({'INFO'}, "Calculation is finished.")         
+
+            daresfile = open(lexport.newdir+"/"+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res", "w")
+            for r in res[frame]:
+                daresfile.write(str(round(r, 2))+"\n")
+            daresfile.close()
+        calc_op.report({'INFO'}, "Calculation is finished.") 
+        self.resapply(res, lexport) 
         
     def resapply(self, res, lexport):
         maxres = []
