@@ -88,12 +88,12 @@
  
 
 bl_info = {
-    "name": "Lighting Visualiser (LiVi) Development Version",
+    "name": "Lighting Visualiser (LiVi)",
     "author": "Ryan Southall",
-    "version": (0, 1, 1),
+    "version": (0, 2),
     "blender": (2, 6, 2),
     "api": 34950,
-    "location": "3D View > Tools Panel",
+    "location": "3D View > Properties Panel",
     "description": "Radiance exporter and results visualiser",
     "warning": "This is a beta script. Some functionality is still broken",
     "wiki_url": "",
@@ -111,7 +111,7 @@ if "bpy" in locals():
     import imp
     imp.reload(ui)
 else:
-    from io_livi_dev import ui
+    from io_livi import ui
 
 import bpy, os, sys, subprocess
 from bpy.props import BoolProperty, IntProperty, FloatProperty, EnumProperty, StringProperty
@@ -333,8 +333,8 @@ def register():
             name="Display Panel", description="Shows the Disply Panel",
             default=0)
     Scene.livi_disp_3d = BoolProperty(
-            name="3D DIsplay", description="Enable 3D results analysis",
-            default=False)
+            name="3D Display", description="Enable 3D results analysis",
+            default=0)
     Scene.livi_render_view = BoolProperty(
             name="OpenGL Display", description="Enable OpenGL 3D results view",
             default=True)            

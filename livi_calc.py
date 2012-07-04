@@ -85,7 +85,7 @@ class LiVi_c(object):
         for frame in range(0, bpy.context.scene.frame_end+1):
             if os.path.isfile(lexport.filebase+"-"+str(frame)+".af"):
                 subprocess.call(self.rm+" "+lexport.filebase+"-"+str(frame)+".af", shell=True)
-            rtcmd = "rtrace -n "+str(nproc)+" -w "+lexport.sparams(self.acc)+" -h -ov -I -af "+lexport.filebase+"-"+str(frame)+".af "+lexport.filebase+"-"+str(frame)+".oct  < "+lexport.filebase+".rtrace "+self.simlist[int(lexport.metric)]+" | tee -a "+lexport.newdir+"/"+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res" 
+            rtcmd = "rtrace -n "+str(nproc)+" -w "+lexport.sparams(self.acc)+" -h -ov -I -af "+lexport.filebase+"-"+str(frame)+".af "+lexport.filebase+"-"+str(frame)+".oct  < "+lexport.filebase+".rtrace "+self.simlist[int(lexport.metric)]+" | tee "+lexport.newdir+"/"+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res" 
             rtrun = Popen(rtcmd, shell = True, stdout=PIPE, stderr=STDOUT)        
             for line in rtrun.stdout:
                res[frame].append(float(line.rstrip()))
@@ -124,6 +124,7 @@ class LiVi_c(object):
         lexport.scene.livi_display_panel = 0
 
     def dayavail(self, lexport, calc_op):
+        lexport.clearscened()
         res = [[0] * lexport.reslen for frame in range(0, bpy.context.scene.frame_end+1)]
         vecvals = []
         wd = (7, 5)[int(lexport.scene.livi_calc_da_weekdays)]
@@ -138,13 +139,11 @@ class LiVi_c(object):
             vecvals.append([float(x) for x in line.strip("\n").strip("  ").split(" ")])
         vecfile.close()
         for frame in range(0, bpy.context.scene.frame_end+1):
-            print('help', lexport.newdir, self.simlistn, lexport.metric)
-            print(lexport.newdir+"/"+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res")
             hours = 0
-            subprocess.call("oconv -w "+lexport.lights(frame)+" "+lexport.filename+".whitesky "+lexport.mat(frame)+" "+lexport.poly(frame)+" > "+lexport.filename+"-"+str(frame)+".oct", shell = True)
+            subprocess.call("oconv -w "+lexport.lights(frame)+" "+lexport.filename+".whitesky "+lexport.mat(frame)+" "+lexport.poly(frame)+" > "+lexport.filename+"-"+str(frame)+"ws.oct", shell = True)
             if not os.path.isdir(lexport.newdir+"/s_data"):
                     os.makedirs(lexport.newdir+"/s_data")
-            subprocess.call("cat "+lexport.filebase+".rtrace | rtcontrib -h -I -fo -bn 146 -ab 3 -ad 4096 -lw 0.0003 -n "+str(nproc)+" -f tregenza.cal -b tbin -o "+lexport.newdir+"/s_data/sensor%d.dat -m sky_glow "+lexport.filename+"-"+str(frame)+".oct", shell = True)
+            subprocess.call("cat "+lexport.filebase+".rtrace | rtcontrib -h -I -fo -bn 146 -ab 3 -ad 4096 -lw 0.0003 -n "+str(nproc)+" -f tregenza.cal -b tbin -o "+lexport.newdir+"/s_data/sensor%d.dat -m sky_glow "+lexport.filename+"-"+str(frame)+"ws.oct", shell = True)
             
             for l, readings in enumerate(vecvals):
                 finalillu = []

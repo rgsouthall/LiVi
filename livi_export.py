@@ -88,6 +88,7 @@ class LiVi_e(LiVi_bc):
             self.hdrexport(self.scene.livi_export_hdr_name)
         
         elif self.scene.livi_export_time_type == "1" and self.scene.livi_anim != "1":
+            self.clearscenee()            
             self.ddsskyexport()
         
         for frame in range(0, self.fe + 1):
@@ -337,7 +338,7 @@ class LiVi_e(LiVi_bc):
                     time = datetime.datetime(int(line.split(",")[0]), int(line.split(",")[1]), int(line.split(",")[2]), int(line.split(",")[3])-1, int(line.split(",")[4])-60)
                     dirnorm = line.split(",")[14]
                     diffhoz = line.split(",")[15]    
-                    dglcmd = "gendaylit "+str(time.month)+" "+str(time.day)+" "+str(time.hour)+" -a "+str(lat)+" -o "+str(lon)+" -m "+str(mer)+" -W "+str(dirnorm)+" "+str(diffhoz)+" | genskyvec -c 1 1 1 -m 1 |cut -f1 |tr '\n' ' '"
+                    dglcmd = "gendaylit "+str(time.month)+" "+str(time.day)+" "+str(time.hour)+" -a "+str(lat)+" -o "+str(lon)+" -m "+str(mer)+" -W "+str(dirnorm)+" "+str(diffhoz)+" -O 1 | genskyvec -c 1 1 1 -m 1 |cut -f1 |tr '\n' ' '"
                     dglrun = Popen(dglcmd, shell = True, stdout = PIPE, stderr = PIPE).communicate()
         
                     if dglrun[1] == b'':
@@ -345,12 +346,13 @@ class LiVi_e(LiVi_bc):
                         vecfile.write(dglrun[0].decode()+"\n")
                         prevline = dglrun[0]
                     else:
-                        if dirnorm == 0:
+                        if diffhoz == 0:
                             vecfile.write(str(time.hour)+" "+str(time.weekday())+" ")
                             vecfile.write(null+"\n")
                         else:
                             vecfile.write(str(time.hour)+" "+str(time.weekday())+" ")
-                            vecfile.write(prevline.decode()+"\n")
+#                            vecfile.write(prevline.decode()+"\n")
+                            vecfile.write(null+"\n")
         
                 i = i + 1
             
@@ -613,10 +615,10 @@ class LiVi_e(LiVi_bc):
                             self.reslen = len(calcsurfverts)
                         else:
                             self.reslen = len(calcsurffaces)
-                else:
-                    geo['calc'] = 0
-                    for mat in geo.material_slots:
-                        mat.material.use_transparent_shadows = True
+                    else:
+                        geo['calc'] = 0
+                        for mat in geo.material_slots:
+                            mat.material.use_transparent_shadows = True
                 
                 self.export = 1
             rtrace.close()    

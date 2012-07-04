@@ -24,9 +24,13 @@ from . import livi_export
 class LiVi_d(livi_export.LiVi_e):
     def __init__(self):
         self.scene = bpy.context.scene
+        try:
+            self.scene['livi_disp_3d'] = self.scene['livi_disp_3d']
+        except:
+            self.scene['livi_disp_3d'] = 0
         self.clearscened()
         self.rad_display()
-        
+            
     def rad_display(self):
         for a in bpy.app.handlers.frame_change_pre:
             bpy.app.handlers.frame_change_pre.remove(a)

@@ -2,6 +2,9 @@
 AdditionalInfoV2=Details_Size,Details_Date,CustomizedDetails
 SortOrder=1
 Sorting=2
-Timestamp=2012,6,26,12,56,19
+Timestamp=2012,7,4,9,27,10
 Version=2
 ViewMode=1
+
+[Settings]
+HiddenFilesShown=true
