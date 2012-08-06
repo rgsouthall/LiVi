@@ -27,7 +27,6 @@ class LiVi_c(object):
         self.acc = lexport.scene.livi_calc_acc
         self.scene = bpy.context.scene
         if str(sys.platform) != 'win32':
-            self.rm = "rm"
             if lexport.scene.livi_export_time_type == "0" or lexport.scene.livi_anim == "1":
                 self.simlistn = ("illumout", "irradout", "dfout")
                 self.simlist = (" |  rcalc  -e '$1=47.4*$1+120*$2+11.6*$3' ", " |  rcalc  -e '$1=$1' ", " |  rcalc  -e '$1=(47.4*$1+120*$2+11.6*$3)/100' ")
@@ -37,14 +36,13 @@ class LiVi_c(object):
                 self.simlist = (" |  rcalc  -e '$1=47.4*$1+120*$2+11.6*$3' ", " |  rcalc  -e '$1=$1' ")
                 self.unit = ("Luxhours", "Wh/m^2", "", "", "DA %")
         if str(sys.platform) == 'win32':
-            self.rm = "del" 
             if lexport.scene.livi_export_time_type == "0"  or lexport.scene.livi_anim == "1":
                 self.simlistn = ("illumout", "irradout", "dfout")
-                self.simlist = (' |  rcalc  -e "\$1=47.4*\$1+120*\$2+11.6*\$3" ', " |  rcalc  -e '\$1=\$1' ", " |  rcalc  -e '\$1=(47.4*\$1+120*\$2+11.6*\$3)/100' ")
+                self.simlist = (' |  rcalc  -e "$1=47.4*$1+120*$2+11.6*$3" ', ' |  rcalc  -e "$1=$1" ', ' |  rcalc  -e "$1=(47.4*$1+120*$2+11.6*$3)/100" ')
                 self.unit = ("Lux", "W/m^2", "DF %", "Glare")
             else:
                 self.simlistn = ("cumillumout", "cumirradout", "", "", "daout")
-                self.simlist = (' |  rcalc  -e "\$1=47.4*\$1+120*\$2+11.6*\$3" ', " |  rcalc  -e '\$1=\$1' ")
+                self.simlist = (' |  rcalc  -e "$1=47.4*$1+120*$2+11.6*$3" ', ' |  rcalc  -e "$1=$1" ')
                 self.unit = ("Luxhours", "Wh/m^2", "", "", "DA %")
         try:
             if os.lstat(lexport.filebase+".rtrace").st_size == 0:
@@ -84,14 +82,18 @@ class LiVi_c(object):
         res = [[] for frame in range(0, bpy.context.scene.frame_end+1)]
         for frame in range(0, bpy.context.scene.frame_end+1):
             if os.path.isfile(lexport.filebase+"-"+str(frame)+".af"):
-                subprocess.call(self.rm+" "+lexport.filebase+"-"+str(frame)+".af", shell=True)
-            rtcmd = "rtrace -n "+str(nproc)+" -w "+lexport.sparams(self.acc)+" -h -ov -I -af "+lexport.filebase+"-"+str(frame)+".af "+lexport.filebase+"-"+str(frame)+".oct  < "+lexport.filebase+".rtrace "+self.simlist[int(lexport.metric)]+" | tee "+lexport.newdir+"/"+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res" 
-            rtrun = Popen(rtcmd, shell = True, stdout=PIPE, stderr=STDOUT)        
+                subprocess.call(lexport.rm+" "+lexport.filebase+"-"+str(frame)+".af", shell=True)
+#            rtcmd = "rtrace -n "+str(nproc)+" -w "+lexport.sparams(self.acc)+" -h -ov -I -af "+lexport.filebase+"-"+str(frame)+".af "+lexport.filebase+"-"+str(frame)+".oct  < "+lexport.filebase+".rtrace "+self.simlist[int(lexport.metric)]+" | tee "+lexport.newdir+"/"+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res" 
+            rtcmd = "rtrace -n "+str(nproc)+" -w "+lexport.sparams(self.acc)+" -h -ov -I -af "+lexport.filebase+"-"+str(frame)+".af "+lexport.filebase+"-"+str(frame)+".oct  < "+lexport.filebase+".rtrace "+self.simlist[int(lexport.metric)]+" | tee "+lexport.newdir+lexport.fold+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res" 
+            
+            subprocess.call("echo "+rtcmd, shell=True)
+            rtrun = Popen(rtcmd, shell = True, stdout=PIPE, stderr=STDOUT)
+            
             for line in rtrun.stdout:
                res[frame].append(float(line.rstrip()))
+        
         self.resapply(res, lexport)
         
-           
     def rad_glare(self, lexport, calc_op):
         scene = bpy.context.scene
         gfiles=[]
@@ -104,13 +106,13 @@ class LiVi_c(object):
                 glarerun = Popen(glarecmd, shell = True, stdout = PIPE)
                 for line in glarerun.stdout:
                     if line.decode().split(",")[0] == 'dgp':
-                        glaretext = line.decode().strip(':').replace(',', ' ').split(' ')
+                        glaretext = line.decode().replace(',', ' ').replace("#INF", "").split(' ')
                         glaretf = open(lexport.filebase+".glare", "w")
-                        glaretf.write('%02d' % lexport.simtimes[frame].day+"/"+'%02d' % lexport.simtimes[frame].month+" "+'%02d' % lexport.simtimes[frame].hour+":"+'%02d' % lexport.simtimes[frame].minute+"\n"+glaretext[0]+": "+str(round(float(glaretext[6]),3))+"\n"+glaretext[1]+": "+str(round(float(glaretext[7]),3))+"\n"+glaretext[2]+": "+str(round(float(glaretext[8]),3))+"\n"+glaretext[3]+": "+str(round(float(glaretext[9]),3))+"\n"+glaretext[4]+": "+str(round(float(glaretext[10]),3))+"\n"+glaretext[5]+": "+str(round(float(glaretext[11]),3)))
+                        glaretf.write('%02d' % lexport.simtimes[frame].day+"/"+'%02d' % lexport.simtimes[frame].month+" "+'%02d' % lexport.simtimes[frame].hour+":"+'%02d' % lexport.simtimes[frame].minute+'\n'+glaretext[0]+": "+str(round(float(glaretext[6]),3))+'\n'+glaretext[1]+": "+str(round(float(glaretext[7]),3))+'\n'+glaretext[2]+": "+str(round(float(glaretext[8]),3))+'\n'+glaretext[3]+": "+str(round(float(glaretext[9]),3))+'\n'+glaretext[4]+": "+str(round(float(glaretext[10]),3))+'\n'+glaretext[5]+" "+str(round(float(glaretext[11]),3)))
                         glaretf.close()
-                        subprocess.call("cat "+lexport.filename+".glare | psign -h 32 -cb 0 0 0 -cf 40 40 40 | pcompos glaretemp"+str(frame)+".hdr 0 0 - 800 550 > glare"+str(frame)+".hdr", shell=True)
-                        subprocess.call("rm glaretemp"+str(frame)+".hdr", shell=True)                    
-                    
+                        subprocess.call(lexport.cat+" "+lexport.filename+".glare | psign -h 32 -cb 0 0 0 -cf 40 40 40 | pcompos glaretemp"+str(frame)+".hdr 0 0 - 800 550 > glare"+str(frame)+".hdr", shell=True)
+                        subprocess.call(lexport.rm+" glaretemp"+str(frame)+".hdr", shell=True)                    
+                        
                 gfile={"name":"glare"+str(frame)+".hdr"}
                 gfiles.append(gfile)
     
@@ -134,16 +136,17 @@ class LiVi_c(object):
             skyrad.close() 
             vecfile = open(lexport.scene.livi_calc_vec_name, "r")
         else:
-            vecfile = open(lexport.newdir+"/"+os.path.splitext(os.path.basename(lexport.scene.livi_export_epw_name))[0]+".vec", "r")    
+            print('hi')
+            vecfile = open(lexport.newdir+lexport.fold+os.path.splitext(os.path.basename(lexport.scene.livi_export_epw_name))[0]+".vec", "r")    
         for li, line in enumerate(vecfile):
-            vecvals.append([float(x) for x in line.strip("\n").strip("  ").split(" ")])
+            vecvals.append([float(x) for x in line.strip("\n").split()])
         vecfile.close()
         for frame in range(0, bpy.context.scene.frame_end+1):
             hours = 0
             subprocess.call("oconv -w "+lexport.lights(frame)+" "+lexport.filename+".whitesky "+lexport.mat(frame)+" "+lexport.poly(frame)+" > "+lexport.filename+"-"+str(frame)+"ws.oct", shell = True)
-            if not os.path.isdir(lexport.newdir+"/s_data"):
-                    os.makedirs(lexport.newdir+"/s_data")
-            subprocess.call("cat "+lexport.filebase+".rtrace | rtcontrib -h -I -fo -bn 146 -ab 3 -ad 4096 -lw 0.0003 -n "+str(nproc)+" -f tregenza.cal -b tbin -o "+lexport.newdir+"/s_data/sensor%d.dat -m sky_glow "+lexport.filename+"-"+str(frame)+"ws.oct", shell = True)
+            if not os.path.isdir(lexport.newdir+lexport.fold+"s_data"):
+                    os.makedirs(lexport.newdir+lexport.fold+"s_data")
+            subprocess.call(lexport.cat+lexport.filebase+".rtrace | rtcontrib -h -I -fo -bn 146 -ab 3 -ad 4096 -lw 0.0003 -n "+lexport.nproc+" -f tregenza.cal -b tbin -o "+lexport.newdir+lexport.fold+"s_data/sensor%d.dat -m sky_glow "+lexport.filename+"-"+str(frame)+"ws.oct", shell = True)
             
             for l, readings in enumerate(vecvals):
                 finalillu = []

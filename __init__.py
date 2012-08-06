@@ -154,13 +154,21 @@ def register():
             name="",
             description="Specify the animation type",
             default="0")
-    Scene.livi_export_time_type = EnumProperty(
-            items=[("0", "Moment", "export for a moment time"),
-                   ("1", "DDS", "analysis over a year"),
-                    ],
-            name="",
-            description="Specify the time type",
-            default="0")        
+    if str(sys.platform) != 'win32': 
+        Scene.livi_export_time_type = EnumProperty(
+                items=[("0", "Moment", "export for a moment time"),
+                       ("1", "DDS", "analysis over a year"),],
+                name="",
+                description="Specify the time type",
+                default="0")      
+    elif str(sys.platform) == 'win32':
+        Scene.livi_export_time_type = EnumProperty(
+                items=[("0", "Moment", "export for a moment time"),                 
+                        ("1", "DDS", "analysis over a year"),],
+                name="",
+                description="Specify the time type",
+                default="0") 
+        
     Scene.livi_export_calc_points = EnumProperty(
             items=[("0", "Faces", "export faces for calculation points"),
                    ("1", "Vertices", "export vertices for calculation points"),

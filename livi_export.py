@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import bpy, os, math, subprocess, datetime, multiprocessing
+import bpy, os, math, subprocess, datetime, multiprocessing, sys
 from math import sin, cos, acos, asin, pi
 from mathutils import Vector, Matrix
 from subprocess import PIPE, Popen
@@ -29,16 +29,27 @@ nproc = multiprocessing.cpu_count()
 
 class LiVi_bc(object):
     def __init__(self, filepath, scene):
+        if str(sys.platform) != 'win32':
+            self.nproc = str(multiprocessing.cpu_count())
+            self.rm = "rm "
+            self.cat = "cat "
+            self.fold = "/"
+        elif str(sys.platform) == 'win32':
+            self.nproc = "1"
+            self.rm = "del "
+            self.cat = "type "
+            self.fold = "\\"
         self.filepath = filepath
         self.filename = os.path.splitext(os.path.basename(self.filepath))[0]
         self.filedir = os.path.dirname(self.filepath)
-        if not os.path.isdir(self.filedir+"/"+self.filename):
-            os.makedirs(self.filedir+"/"+self.filename)        
-        self.newdir = self.filedir+"/"+self.filename
-        self.filebase = self.newdir+"/"+self.filename
+        if not os.path.isdir(self.filedir+self.fold+self.filename):
+            os.makedirs(self.filedir+self.fold+self.filename)        
+        self.newdir = self.filedir+self.fold+self.filename
+        self.filebase = self.newdir+self.fold+self.filename
         self.scene = scene
         self.scene['newdir'] = self.newdir
         
+            
 class LiVi_e(LiVi_bc):
     def __init__(self, filepath, scene, sd, tz, export_op):
         LiVi_bc.__init__(self, filepath, scene)
@@ -318,6 +329,7 @@ class LiVi_e(LiVi_bc):
         rad_sky.close()
         
     def ddsskyexport(self):
+        os.chdir(self.newdir)
         if np == 0:
             vecvals = []
         else:
@@ -326,6 +338,7 @@ class LiVi_e(LiVi_bc):
         j = 0
         null = "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
         prevline = b"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        pcombfiles = "ps0.hdr ps1.hdr ps2.hdr ps3.hdr ps4.hdr ps5.hdr ps6.hdr ps7.hdr ps8.hdr ps9.hdr ps10.hdr ps11.hdr ps12.hdr ps13.hdr ps14.hdr ps15.hdr ps16.hdr ps17.hdr ps18.hdr ps19.hdr ps20.hdr ps21.hdr ps22.hdr ps23.hdr ps24.hdr ps25.hdr ps26.hdr ps27.hdr ps28.hdr ps29.hdr ps30.hdr ps31.hdr ps32.hdr ps33.hdr ps34.hdr ps35.hdr ps36.hdr ps37.hdr ps38.hdr ps39.hdr ps40.hdr ps41.hdr ps42.hdr ps43.hdr ps44.hdr ps45.hdr ps46.hdr ps47.hdr ps48.hdr ps49.hdr ps50.hdr ps51.hdr ps52.hdr ps53.hdr ps54.hdr ps55.hdr ps56.hdr ps57.hdr ps58.hdr ps59.hdr ps60.hdr ps61.hdr ps62.hdr ps63.hdr ps64.hdr ps65.hdr ps66.hdr ps67.hdr ps68.hdr ps69.hdr ps70.hdr ps71.hdr ps72.hdr ps73.hdr ps74.hdr ps75.hdr ps76.hdr ps77.hdr ps78.hdr ps79.hdr ps80.hdr ps81.hdr ps82.hdr ps83.hdr ps84.hdr ps85.hdr ps86.hdr ps87.hdr ps88.hdr ps89.hdr ps90.hdr ps91.hdr ps92.hdr ps93.hdr ps94.hdr ps95.hdr ps96.hdr ps97.hdr ps98.hdr ps99.hdr ps100.hdr ps101.hdr ps102.hdr ps103.hdr ps104.hdr ps105.hdr ps106.hdr ps107.hdr ps108.hdr ps109.hdr ps110.hdr ps111.hdr ps112.hdr ps113.hdr ps114.hdr ps115.hdr ps116.hdr ps117.hdr ps118.hdr ps119.hdr ps120.hdr ps121.hdr ps122.hdr ps123.hdr ps124.hdr ps125.hdr ps126.hdr ps127.hdr ps128.hdr ps129.hdr ps130.hdr ps131.hdr ps132.hdr ps133.hdr ps134.hdr ps135.hdr ps136.hdr ps137.hdr ps138.hdr ps139.hdr ps140.hdr ps141.hdr ps142.hdr ps143.hdr ps144.hdr ps145.hdr"        
         if os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[1] in (".epw", ".EPW"):    
             epw = open(self.scene.livi_export_epw_name, "r")
             vecfile = open(self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".vec", "w")
@@ -337,10 +350,14 @@ class LiVi_e(LiVi_bc):
                 elif i > 8 and float(line.split(",")[15]) > 0:
                     time = datetime.datetime(int(line.split(",")[0]), int(line.split(",")[1]), int(line.split(",")[2]), int(line.split(",")[3])-1, int(line.split(",")[4])-60)
                     dirnorm = line.split(",")[14]
-                    diffhoz = line.split(",")[15]    
-                    dglcmd = "gendaylit "+str(time.month)+" "+str(time.day)+" "+str(time.hour)+" -a "+str(lat)+" -o "+str(lon)+" -m "+str(mer)+" -W "+str(dirnorm)+" "+str(diffhoz)+" -O 1 | genskyvec -c 1 1 1 -m 1 |cut -f1 |tr '\n' ' '"
+                    diffhoz = line.split(",")[15]
+                    if str(sys.platform) != 'win32':
+                        dglcmd = "gendaylit "+str(time.month)+" "+str(time.day)+" "+str(time.hour)+" -a "+str(lat)+" -o "+str(lon)+" -m "+str(mer)+" -W "+str(dirnorm)+" "+str(diffhoz)+" -O 1 | genskyvec -c 1 1 1 -m 1 |cut -f1 |tr -d '\n' ' '"
+                    elif str(sys.platform) == 'win32':
+                       dglcmd = 'gendaylit '+str(time.month)+' '+str(time.day)+' '+str(time.hour)+' -a '+str(lat)+' -o '+str(lon)+' -m '+str(mer)+' -W '+str(dirnorm)+' '+str(diffhoz)+' -O 1 | perl -S genskyvec.pl -c 1 1 1 -m 1 |cut -f1 | tr "\\r\\n" " "'                  
+#                       print(dglcmd)
                     dglrun = Popen(dglcmd, shell = True, stdout = PIPE, stderr = PIPE).communicate()
-        
+                    
                     if dglrun[1] == b'':
                         vecfile.write(str(time.hour)+" "+str(time.weekday())+" ")
                         vecfile.write(dglrun[0].decode()+"\n")
@@ -351,9 +368,7 @@ class LiVi_e(LiVi_bc):
                             vecfile.write(null+"\n")
                         else:
                             vecfile.write(str(time.hour)+" "+str(time.weekday())+" ")
-#                            vecfile.write(prevline.decode()+"\n")
-                            vecfile.write(null+"\n")
-        
+                            vecfile.write(prevline.decode()+"\n")
                 i = i + 1
             
             vecfile.close()
@@ -366,7 +381,8 @@ class LiVi_e(LiVi_bc):
                 vecfile = open(self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".vec", "r")
             if np == 0:
                 for li, line in enumerate(vecfile):
-                    vecvals.append([negneg(x) for x in line.strip("\n").strip("  ").split(" ")])
+#                   linux used line.strip("\n").strip("  ").split(" ") below
+                    vecvals.append([negneg(x) for x in line.strip("\n").split() if x])
                 vecfile.close()
             else:
                 vecvals = numpy.fromfile(self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".vec", dtype = float, count = -1, sep = " ")
@@ -377,18 +393,18 @@ class LiVi_e(LiVi_bc):
                 vals = [sum(a) for a in zip(*vecvals)]
             else:
                 vals = vecvals.sum(axis=0)
-            skyrad = open(self.filebase+".whitesky", "w")    
+            skyrad = open(self.filename+".whitesky", "w")    
             skyrad.write("void glow sky_glow \n0 \n0 \n4 1 1 1 0 \nsky_glow source sky \n0 \n0 \n4 0 0 1 180 \nvoid glow ground_glow \n0 \n0 \n4 1 1 1 0 \nground_glow source ground \n0 \n0 \n4 0 0 -1 180\n\n")
             skyrad.close()
-            subprocess.call("oconv "+self.filebase+".whitesky > "+self.filebase+"-whitesky.oct", shell=True)
-            subprocess.call("vwrays -ff -x 600 -y 600 -vta -vp 0 0 0 -vd 0 1 0 -vu 0 0 1 -vh 360 -vv 360 -vo 0 -va 0 -vs 0 -vl 0 | rtcontrib -bn 146 -fo -ab 0 -ad 512 -n "+str(nproc)+" -ffc $(vwrays -d -x 600 -y 600 -vta -vp 0 0 0 -vd 0 1 0 -vu 0 0 1 -vh 360 -vv 360 -vo 0 -va 0 -vs 0 -vl 0) -V+ -f tregenza.cal -b tbin -o p%d.hdr -m sky_glow "+self.filebase+"-whitesky.oct", shell = True)
+            subprocess.call("oconv "+self.filename+".whitesky > "+self.filename+"-whitesky.oct", shell=True)
+#            subprocess.call("vwrays -ff -x 600 -y 600 -vta -vp 0 0 0 -vd 0 1 0 -vu 0 0 1 -vh 360 -vv 360 -vo 0 -va 0 -vs 0 -vl 0 | rtcontrib -bn 146 -fo -ab 0 -ad 512 -n "+str(nproc)+" -ffc $(vwrays -d -x 600 -y 600 -vta -vp 0 0 0 -vd 0 1 0 -vu 0 0 1 -vh 360 -vv 360 -vo 0 -va 0 -vs 0 -vl 0) -V+ -f tregenza.cal -b tbin -o p%d.hdr -m sky_glow "+self.filename+"-whitesky.oct", shell = True)
+            subprocess.call("vwrays -ff -x 600 -y 600 -vta -vp 0 0 0 -vd 0 1 0 -vu 0 0 1 -vh 360 -vv 360 -vo 0 -va 0 -vs 0 -vl 0 | rtcontrib -bn 146 -fo -ab 0 -ad 512 -n "+self.nproc+" -ffc -x 600 -y 600 -ld- -V+ -f tregenza.cal -b tbin -o p%d.hdr -m sky_glow "+self.filename+"-whitesky.oct", shell = True)
             
             for j in range(0, 146):
                 subprocess.call("pcomb -s "+str(vals[j+2])+" p"+str(j)+".hdr > ps"+str(j)+".hdr", shell = True)
-                subprocess.call("rm  p"+str(j)+".hdr", shell = True) 
-            subprocess.call("pcomb -h  ps*.hdr > "+self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".hdr", shell = True)    
-            for j in range(0, 146):    
-                subprocess.call("rm ps"+str(j)+".hdr" , shell = True) 
+                subprocess.call(self.rm+"  p"+str(j)+".hdr", shell = True) 
+            subprocess.call("pcomb -h  "+pcombfiles+" > "+self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".hdr", shell = True)    
+            subprocess.call(self.rm+" ps*.hdr" , shell = True)            
 
         self.hdrexport([self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".hdr"])
     
@@ -566,7 +582,6 @@ class LiVi_e(LiVi_bc):
                 if geo.type == 'MESH' and 'lightarray' not in geo.name and geo.hide == False and geo.layers[0] == True:
                     bpy.ops.object.mode_set(mode = 'EDIT')
                     bpy.ops.mesh.select_all(action='SELECT')
-#                    bpy.ops.mesh.normals_make_consistent(inside=False)
                     bpy.ops.object.mode_set(mode = 'OBJECT')
                     meshorig = geo.data
                     mesh = meshorig.copy()
