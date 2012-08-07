@@ -73,6 +73,8 @@ class LiVi_e(LiVi_bc):
             self.frameend = 0
 
         elif scene.livi_anim == "1":
+            self.scene.livi_export_time_type = "0"
+            self.sky_type = int(scene.livi_export_sky_type_period)
             self.starttime = datetime.datetime(2010, int(scene.livi_export_start_month), int(scene.livi_export_start_day), int(scene.livi_export_start_hour), 0)
             self.endtime = datetime.datetime(2010, int(scene.livi_export_end_month), int(scene.livi_export_end_day), int(scene.livi_export_end_hour), 0)
             self.hours = (self.endtime-self.starttime).seconds/3600
@@ -89,7 +91,7 @@ class LiVi_e(LiVi_bc):
         
         if self.sky_type < 4:    
             self.skytypeparams = ("+s", "+i", "-c", "-c")[self.sky_type]
-        
+            
         self.rtrace = self.filebase+".rtrace"  
         
         if self.scene.livi_export_time_type == "0" and self.sky_type in (0, 1, 2, 3) or self.scene.livi_anim == "1":
@@ -224,7 +226,6 @@ class LiVi_e(LiVi_bc):
             return(" -ab %s -ad %s -ar %s -as %s -av 0 0 0 -aa %s -dj %s -ds %s -dr %s -ss %s -st %s -lw %s " %(num))
     
     def sunexport(self):
-        hdr_skies = []
         for frame in range(0, self.frameend + 1):
             bpy.ops.time.end_frame_set = frame
             simtime = self.starttime + frame*datetime.timedelta(seconds = 3600*self.scene.livi_export_interval)
@@ -249,6 +250,7 @@ class LiVi_e(LiVi_bc):
                     sun.data.shadow_soft_size = 1
                     sun.data.energy = 3
                 sun.location = (0,0,10)
+                hdr_skies = self.newdir+"/"+str(frame)+".hdr"
             sun.rotation_euler = (90-solalt)*deg2rad, 0, solazi*deg2rad
             sun.keyframe_insert(data_path = 'location', frame = frame)
             sun.keyframe_insert(data_path = 'rotation_euler', frame = frame)
@@ -259,63 +261,62 @@ class LiVi_e(LiVi_bc):
             self.skyexport(open(self.sky(frame), "a"))           
             subprocess.call("oconv "+self.sky(frame)+" > "+self.filebase+"-"+str(frame)+"sky.oct", shell=True)
             subprocess.call("rpict -vta -vp 0 0 0 -vd 1 0 0 -vu 0 0 1 -vh 360 -vv 360 -x 1000 -y 1000 "+self.filebase+"-"+str(frame)+"sky.oct > "+self.newdir+"/"+str(frame)+".hdr", shell=True)
-            hdr_skies.append(self.newdir+"/"+str(frame)+".hdr")
         
-            self.hdrexport(hdr_skies)
-                
+        self.hdrexport(hdr_skies)
+              
     def hdrexport(self, hdr_skies):
-        for frame, sky in enumerate(hdr_skies):
-            if self.scene.world.texture_slots[0] == None:
-                imgPath = sky
-                img = bpy.data.images.load(imgPath)
-                if len(hdr_skies) == 1:
-                    img.source = 'FILE'
-                else:
-                    img.source = 'SEQUENCE'
-                imtex = bpy.data.textures.new('Radsky', type = 'IMAGE')
-                imtex.image = img
-                imtex.factor_red = (0.05, 0.000001)[int(self.scene.livi_export_time_type)]
-                imtex.factor_green = (0.05, 0.000001)[int(self.scene.livi_export_time_type)]
-                imtex.factor_blue = (0.05, 0.000001)[int(self.scene.livi_export_time_type)]
-                
-                w = bpy.data.worlds['World']
-                slot = w.texture_slots.add()
-                slot.texture = imtex
-                slot.use_map_horizon = True
-                slot.use_map_blend = False
-                slot.texture_coords = 'ANGMAP'
-                
-                bpy.context.scene.world.light_settings.use_environment_light = True
-                bpy.context.scene.world.light_settings.use_indirect_light = False
-                bpy.context.scene.world.light_settings.use_ambient_occlusion = True
-                bpy.context.scene.world.light_settings.environment_energy = 1
-                bpy.context.scene.world.light_settings.environment_color = 'SKY_COLOR'
-                bpy.context.scene.world.light_settings.gather_method = 'APPROXIMATE'
-                bpy.context.scene.world.light_settings.passes = 1
-                bpy.context.scene.world.use_sky_real = True
-                bpy.context.scene.world.use_sky_paper = False
-                bpy.context.scene.world.use_sky_blend = False
-                if self.scene.livi_export_time_type == "0":
-                    bpy.context.scene.world.ambient_color = (0.04, 0.04, 0.04)
-                else:
-                    bpy.context.scene.world.ambient_color = (0.000001, 0.000001, 0.000001)
-                bpy.context.scene.world.horizon_color = (0, 0, 0)
-                bpy.context.scene.world.zenith_color = (0, 0, 0)
-                render = bpy.context.scene.render
-                render.use_raytrace = True
-                render.use_textures = True
-                render.use_shadows = True
-                render.use_color_management = True
-                bpy.ops.images.reload
-            else:
-                for im in bpy.data.images:
-                    if ".hdr" in im.name or ".HDR" in im.name:
-                        im.filepath = sky
-                        bpy.ops.image.reload()
-            if self.sky_type == 4:
-                self.hdrsky(open(self.sky(frame), "w"), self.scene.livi_export_hdr_name)
-            elif self.time_type == 1:
-                self.hdrsky(open(self.sky(frame), "w"), sky)
+        if self.scene.world.texture_slots[0] == None or self.scene.world.texture_slots[0] == "":
+            imgPath = hdr_skies
+            img = bpy.data.images.load(imgPath)
+            imtex = bpy.data.textures.new('Radsky', type = 'IMAGE')
+            imtex.image = img
+            w = bpy.data.worlds['World']
+            slot = w.texture_slots.add()
+            slot.texture = imtex
+            slot.use_map_horizon = True
+            slot.use_map_blend = False
+            slot.texture_coords = 'ANGMAP'
+            
+            bpy.context.scene.world.light_settings.use_environment_light = True
+            bpy.context.scene.world.light_settings.use_indirect_light = False
+            bpy.context.scene.world.light_settings.use_ambient_occlusion = True
+            bpy.context.scene.world.light_settings.environment_energy = 1
+            bpy.context.scene.world.light_settings.environment_color = 'SKY_COLOR'
+            bpy.context.scene.world.light_settings.gather_method = 'APPROXIMATE'
+            bpy.context.scene.world.light_settings.passes = 1
+            bpy.context.scene.world.use_sky_real = True
+            bpy.context.scene.world.use_sky_paper = False
+            bpy.context.scene.world.use_sky_blend = False
+            
+            bpy.context.scene.world.horizon_color = (0, 0, 0)
+            bpy.context.scene.world.zenith_color = (0, 0, 0)
+            render = bpy.context.scene.render
+            render.use_raytrace = True
+            render.use_textures = True
+            render.use_shadows = True
+            render.use_color_management = True
+            bpy.ops.images.reload
+        else:
+            bpy.data.worlds['World'].texture_slots[0].texture.image.filepath = hdr_skies
+            bpy.data.worlds['World'].texture_slots[0].texture.image.reload()
+        
+        if self.scene.livi_anim != '1':
+            bpy.data.worlds['World'].texture_slots[0].texture.image.source = 'FILE'
+        else:
+            bpy.data.worlds['World'].texture_slots[0].texture.image.source = 'SEQUENCE'
+        
+        if self.scene.livi_export_time_type == "0":
+            bpy.context.scene.world.ambient_color = (0.04, 0.04, 0.04)
+        else:
+            bpy.context.scene.world.ambient_color = (0.000001, 0.000001, 0.000001)
+        bpy.data.worlds['World'].texture_slots[0].texture.factor_red = (0.05, 0.000001)[int(self.scene.livi_export_time_type)]
+        bpy.data.worlds['World'].texture_slots[0].texture.factor_green = (0.05, 0.000001)[int(self.scene.livi_export_time_type)]
+        bpy.data.worlds['World'].texture_slots[0].texture.factor_blue = (0.05, 0.000001)[int(self.scene.livi_export_time_type)]
+        
+        if self.sky_type == 4:
+            self.hdrsky(open(self.sky(0), "w"), self.scene.livi_export_hdr_name)
+        elif self.time_type == 1:
+            self.hdrsky(open(self.sky(0), "w"), hdr_skies)
 
     def skyexport(self, rad_sky):
         rad_sky.write("skyfunc glow skyglow\n0\n0\n")
@@ -355,7 +356,6 @@ class LiVi_e(LiVi_bc):
                         dglcmd = "gendaylit "+str(time.month)+" "+str(time.day)+" "+str(time.hour)+" -a "+str(lat)+" -o "+str(lon)+" -m "+str(mer)+" -W "+str(dirnorm)+" "+str(diffhoz)+" -O 1 | genskyvec -c 1 1 1 -m 1 |cut -f1 |tr -d '\n' ' '"
                     elif str(sys.platform) == 'win32':
                        dglcmd = 'gendaylit '+str(time.month)+' '+str(time.day)+' '+str(time.hour)+' -a '+str(lat)+' -o '+str(lon)+' -m '+str(mer)+' -W '+str(dirnorm)+' '+str(diffhoz)+' -O 1 | perl -S genskyvec.pl -c 1 1 1 -m 1 |cut -f1 | tr "\\r\\n" " "'                  
-#                       print(dglcmd)
                     dglrun = Popen(dglcmd, shell = True, stdout = PIPE, stderr = PIPE).communicate()
                     
                     if dglrun[1] == b'':
@@ -405,8 +405,11 @@ class LiVi_e(LiVi_bc):
                 subprocess.call(self.rm+"  p"+str(j)+".hdr", shell = True) 
             subprocess.call("pcomb -h  "+pcombfiles+" > "+self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".hdr", shell = True)    
             subprocess.call(self.rm+" ps*.hdr" , shell = True)            
-
-        self.hdrexport([self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".hdr"])
+        
+        if os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[-1] in (".hdr", ".HDR"):
+            self.hdrexport(self.scene.livi_export_epw_name)
+        else:
+            self.hdrexport([self.newdir+"/"+os.path.splitext(os.path.basename(self.scene.livi_export_epw_name))[0]+".hdr"])
     
     
     def hdrsky(self, rad_sky, skyfile):
